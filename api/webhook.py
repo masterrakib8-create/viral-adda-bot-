@@ -75,7 +75,7 @@ def is_active_hours() -> bool:
 
 
 def graph_post(path: str, payload: dict, timeout: int = 8):
-    url = f"https://graph.facebook.com/v19.0/me/{path}?access_token={PAGE_ACCESS_TOKEN}"
+    url = f"https://graph.facebook.com/v21.0/me/{path}?access_token={PAGE_ACCESS_TOKEN}"
     req = urllib.request.Request(
         url, data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json"},
