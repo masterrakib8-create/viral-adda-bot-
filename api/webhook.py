@@ -86,7 +86,7 @@ def graph_post(path: str, payload: dict, timeout: int = 8):
         return {"ok": False, "status": e.code,
                 "body": e.read().decode(errors="replace")[:600]}
     except Exception as e:
-        return {"ok": False, "status": 0, "body": "Error: " + str(e)}: 0, "body": f"{type(e).*name*}: {e}"}
+        return {"ok": False, "status": 0, "body": "Error: " + str(e)}
 
 def graph_get(path: str, timeout: int = 8):
     sep = "&" if "?" in path else "?"
@@ -100,7 +100,7 @@ def graph_get(path: str, timeout: int = 8):
         return {"ok": False, "status": e.code,
                 "body": e.read().decode(errors="replace")[:600]}
     except Exception as e:
-        return {"ok": False, "status": 0, "body": "Error: " + str(e)}: 0, "body": f"{type(e).*name*}: {e}"}
+        return {"ok": False, "status": 0, "body": "Error: " + str(e)}
 
 def send_text(psid: str, text: str):
     chunks = [text[i:i + 1900] for i in range(0, len(text), 1900)] or ["..."]
@@ -270,3 +270,4 @@ class handler(BaseHTTPRequestHandler):
         except Exception as e:
             print("Bot error:", e)
         self._send(200, b"ok")
+
