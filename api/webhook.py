@@ -1,4 +1,5 @@
 
+
 import json
 import os
 import urllib.request
@@ -62,10 +63,8 @@ WELCOME_TEXT = (
     "আমি এই পেজের AI সহকারী। নিচ থেকে বেছে নিন, বা যেকোনো প্রশ্ন লিখুন 👇"
 )
 
-
 def dhaka_now():
     return datetime.now(timezone(timedelta(hours=6)))
-
 
 def is_active_hours() -> bool:
     h = dhaka_now().hour
@@ -73,16 +72,35 @@ def is_active_hours() -> bool:
         return ACTIVE_FROM <= h < ACTIVE_TO
     return h >= ACTIVE_FROM or h < ACTIVE_TO
 
-
 def graph_post(path: str, payload: dict, timeout: int = 8):
     url = f"https://graph.facebook.com/v21.0/me/{path}?access_token={PAGE_ACCESS_TOKEN}"
     req = urllib.request.Request(
         url, data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=timeout) as res:
-        return json.load(res)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            return {"ok": True, "status": res.status,
+                    "body": res.read().decode(errors="replace")[:600]}
+    except urllib.error.HTTPError as e:
+        return {"ok": False, "status": e.code,
+                "body": e.read().decode(errors="replace")[:600]}
+    except Exception as e:
+        return {"ok": False, "status": 0, "body": f"{type(e).*name*}: {e}"}
 
+def graph_get(path: str, timeout: int = 8):
+    sep = "&" if "?" in path else "?"
+    url = f"https://graph.facebook.com/v21.0/{path}{sep}access_token={PAGE_ACCESS_TOKEN}"
+    req = urllib.request.Request(url, method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            return {"ok": True, "status": res.status,
+                    "body": res.read().decode(errors="replace")[:600]}
+    except urllib.error.HTTPError as e:
+        return {"ok": False, "status": e.code,
+                "body": e.read().decode(errors="replace")[:600]}
+    except Exception as e:
+        return {"ok": False, "status": 0, "body": f"{type(e).*name*}: {e}"}
 
 def send_text(psid: str, text: str):
     chunks = [text[i:i + 1900] for i in range(0, len(text), 1900)] or ["..."]
@@ -92,13 +110,11 @@ def send_text(psid: str, text: str):
             "message": {"text": chunk},
         })
 
-
 def send_with_quick_replies(psid: str, text: str):
     graph_post("messages", {
         "recipient": {"id": psid},
         "message": {"text": text, "quick_replies": QUICK_REPLIES},
     })
-
 
 def send_action(psid: str, action: str):
     try:
@@ -108,7 +124,6 @@ def send_action(psid: str, action: str):
         })
     except Exception:
         pass
-
 
 def gemini_reply(user_text: str) -> str:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
@@ -125,7 +140,6 @@ def gemini_reply(user_text: str) -> str:
         data = json.load(res)
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
 
-
 def ai_answer(psid: str, prompt: str):
     send_action(psid, "typing_on")
     try:
@@ -137,13 +151,11 @@ def ai_answer(psid: str, prompt: str):
         send_action(psid, "typing_off")
         send_text(psid, "😅 একটু সমস্যা হচ্ছে, আবার লিখুন প্লিজ 🙏")
 
-
 def check_faq(text: str):
     for keyword, answer in FAQ.items():
         if keyword in text:
             return answer
     return None
-
 
 def handle_text(psid: str, text: str):
     t = text.strip()
@@ -159,7 +171,6 @@ def handle_text(psid: str, text: str):
         return
     ai_answer(psid, t)
 
-
 def handle_payload(psid: str, payload: str):
     if payload == "GET_STARTED":
         send_with_quick_replies(psid, WELCOME_TEXT)
@@ -168,7 +179,6 @@ def handle_payload(psid: str, payload: str):
     else:
         ai_answer(psid, "হাই!")
 
-
 def handle_attachment(psid: str):
     send_with_quick_replies(
         psid,
@@ -176,9 +186,9 @@ def handle_attachment(psid: str):
         "তবে কিছু জানতে চাইলে লিখে পাঠান 😊",
     )
 
-
 def setup_page():
     results = {}
+    results["token_check"] = graph_get("me?fields=id,name")
     results["get_started"] = graph_post("messenger_profile", {
         "get_started": {"payload": "GET_STARTED"},
     })
@@ -198,7 +208,6 @@ def setup_page():
         }],
     })
     return results
-
 
 class handler(BaseHTTPRequestHandler):
     def _send(self, code: int, body: bytes = b"",
@@ -261,5 +270,3 @@ class handler(BaseHTTPRequestHandler):
         except Exception as e:
             print("Bot error:", e)
         self._send(200, b"ok")
-
-        
