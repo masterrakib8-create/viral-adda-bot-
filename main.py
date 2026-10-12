@@ -252,17 +252,6 @@ app = Flask(__name__)
 
 
 def handle_get():
-    if request.args.get("resubscribe") == "1":
-        if request.args.get("token") != VERIFY_TOKEN or not PAGE_ACCESS_TOKEN:
-            return "forbidden", 403
-        try:
-            result = graph_post("subscribed_apps", {
-                "subscribed_fields": "messages,messaging_postbacks",
-            })
-            check = graph_get("subscribed_apps?fields=name,subscribed_fields")
-            return jsonify({"resubscribe": result, "current": check})
-        except Exception as e:
-            return f"resubscribe failed: {e}", 500
     if request.args.get("setup") == "1":
         if request.args.get("token") != VERIFY_TOKEN or not PAGE_ACCESS_TOKEN:
             return "forbidden", 403
